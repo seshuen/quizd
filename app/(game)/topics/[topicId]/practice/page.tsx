@@ -106,7 +106,12 @@ export default function PracticePage({ params }: PracticePageProps) {
 
   return (
     <div className="mx-auto max-w-3xl">
-      <Timer duration={10} onTimeout={handleTimeout} paused={showResult} />
+      <Timer
+        key={gameState.currentQuestionIndex}
+        duration={10}
+        onTimeout={handleTimeout}
+        paused={showResult}
+      />
 
       <QuestionCard
         questionText={currentQuestion.question_text}

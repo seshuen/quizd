@@ -12,6 +12,13 @@ export function Timer({ duration, onTimeout, paused = false }: TimerProps) {
   const [timeLeft, setTimeLeft] = useState(duration)
 
   /*
+  * This effect resets the timer when duration changes (new question)
+  * */
+  useEffect(() => {
+    setTimeLeft(duration)
+  }, [duration])
+
+  /*
   * This effect is used to update the time left
   * @throws An error if the time left update fails
   * */
