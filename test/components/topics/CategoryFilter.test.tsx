@@ -1,0 +1,265 @@
+import { describe, it, beforeEach, afterEach } from 'mocha'
+import { expect } from 'chai'
+import { render, screen, waitFor } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
+import sinon from 'sinon'
+import { CategoryFilter } from '@/components/topics/CategoryFilter'
+import * as supabaseClient from '@/lib/supabase/client'
+
+describe('CategoryFilter Component', () => {
+  let mockSupabase: any
+  let createClientStub: sinon.SinonStub
+
+  beforeEach(() => {
+    // Mock Supabase client
+    mockSupabase = {
+      from: sinon.stub().returnsThis(),
+      select: sinon.stub().returnsThis(),
+      order: sinon.stub().returnsThis(),
+    }
+
+    createClientStub = sinon.stub(supabaseClient, 'createClient').returns(mockSupabase)
+  })
+
+  afterEach(() => {
+    sinon.restore()
+  })
+
+  const mockCategories = [
+    { category: 'programming' },
+    { category: 'science' },
+    { category: 'programming' }, // Duplicate to test uniqueness
+    { category: 'history' },
+  ]
+
+  it('should render loading state initially', () => {
+    mockSupabase.order.resolves({ data: null, error: null })
+    const onChange = sinon.stub()
+
+    render(<CategoryFilter selected="all" onChange={onChange} />)
+
+    // Should show skeleton loaders
+    const skeletons = document.querySelectorAll('.animate-pulse')
+    expect(skeletons.length).to.be.greaterThan(0)
+  })
+
+  it('should fetch categories on mount', async () => {
+    mockSupabase.order.resolves({ data: mockCategories, error: null })
+    const onChange = sinon.stub()
+
+    render(<CategoryFilter selected="all" onChange={onChange} />)
+
+    await waitFor(() => {
+      expect(mockSupabase.from.calledWith('topics')).to.be.true
+      expect(mockSupabase.select.calledWith('category')).to.be.true
+      expect(mockSupabase.order.calledWith('category')).to.be.true
+    })
+  })
+
+  it('should render "All Topics" button', async () => {
+    mockSupabase.order.resolves({ data: mockCategories, error: null })
+    const onChange = sinon.stub()
+
+    render(<CategoryFilter selected="all" onChange={onChange} />)
+
+    await waitFor(() => {
+      expect(screen.getByText('All Topics')).to.exist
+    })
+  })
+
+  it('should render unique categories', async () => {
+    mockSupabase.order.resolves({ data: mockCategories, error: null })
+    const onChange = sinon.stub()
+
+    render(<CategoryFilter selected="all" onChange={onChange} />)
+
+    await waitFor(() => {
+      expect(screen.getByText('Programming')).to.exist
+      expect(screen.getByText('Science')).to.exist
+      expect(screen.getByText('History')).to.exist
+    })
+  })
+
+  it('should capitalize category labels', async () => {
+    mockSupabase.order.resolves({ data: [{ category: 'programming' }], error: null })
+    const onChange = sinon.stub()
+
+    render(<CategoryFilter selected="all" onChange={onChange} />)
+
+    await waitFor(() => {
+      expect(screen.getByText('Programming')).to.exist
+      expect(screen.queryByText('programming')).to.not.exist
+    })
+  })
+
+  it('should highlight selected category', async () => {
+    mockSupabase.order.resolves({ data: mockCategories, error: null })
+    const onChange = sinon.stub()
+
+    render(<CategoryFilter selected="programming" onChange={onChange} />)
+
+    await waitFor(() => {
+      const programmingButton = screen.getByText('Programming').closest('button')
+      expect(programmingButton?.className).to.include('bg-indigo-600')
+      expect(programmingButton?.className).to.include('text-white')
+    })
+  })
+
+  it('should highlight "All Topics" when selected', async () => {
+    mockSupabase.order.resolves({ data: mockCategories, error: null })
+    const onChange = sinon.stub()
+
+    render(<CategoryFilter selected="all" onChange={onChange} />)
+
+    await waitFor(() => {
+      const allButton = screen.getByText('All Topics').closest('button')
+      expect(allButton?.className).to.include('bg-indigo-600')
+      expect(allButton?.className).to.include('text-white')
+    })
+  })
+
+  it('should call onChange when category is clicked', async () => {
+    mockSupabase.order.resolves({ data: mockCategories, error: null })
+    const onChange = sinon.stub()
+    const user = userEvent.setup()
+
+    render(<CategoryFilter selected="all" onChange={onChange} />)
+
+    await waitFor(() => {
+      expect(screen.getByText('Programming')).to.exist
+    })
+
+    const programmingButton = screen.getByText('Programming')
+    await user.click(programmingButton)
+
+    expect(onChange.calledWith('programming')).to.be.true
+  })
+
+  it('should call onChange with "all" when All Topics is clicked', async () => {
+    mockSupabase.order.resolves({ data: mockCategories, error: null })
+    const onChange = sinon.stub()
+    const user = userEvent.setup()
+
+    render(<CategoryFilter selected="programming" onChange={onChange} />)
+
+    await waitFor(() => {
+      expect(screen.getByText('All Topics')).to.exist
+    })
+
+    const allButton = screen.getByText('All Topics')
+    await user.click(allButton)
+
+    expect(onChange.calledWith('all')).to.be.true
+  })
+
+  it('should handle empty categories', async () => {
+    mockSupabase.order.resolves({ data: [], error: null })
+    const onChange = sinon.stub()
+
+    render(<CategoryFilter selected="all" onChange={onChange} />)
+
+    await waitFor(() => {
+      expect(screen.getByText('All Topics')).to.exist
+      expect(screen.queryByText('Programming')).to.not.exist
+    })
+  })
+
+  it('should handle fetch error', async () => {
+    mockSupabase.order.resolves({ data: null, error: { message: 'Network error' } })
+    const consoleErrorStub = sinon.stub(console, 'error')
+    const onChange = sinon.stub()
+
+    render(<CategoryFilter selected="all" onChange={onChange} />)
+
+    await waitFor(() => {
+      expect(consoleErrorStub.called).to.be.true
+    })
+
+    consoleErrorStub.restore()
+  })
+
+  it('should have ARIA labels on buttons', async () => {
+    mockSupabase.order.resolves({ data: mockCategories, error: null })
+    const onChange = sinon.stub()
+
+    render(<CategoryFilter selected="all" onChange={onChange} />)
+
+    await waitFor(() => {
+      const allButton = screen.getByLabelText('Show all topics')
+      expect(allButton).to.exist
+
+      const programmingButton = screen.getByLabelText('Filter by Programming')
+      expect(programmingButton).to.exist
+    })
+  })
+
+  it('should have ARIA pressed state', async () => {
+    mockSupabase.order.resolves({ data: mockCategories, error: null })
+    const onChange = sinon.stub()
+
+    render(<CategoryFilter selected="all" onChange={onChange} />)
+
+    await waitFor(() => {
+      const allButton = screen.getByText('All Topics').closest('button')
+      expect(allButton?.getAttribute('aria-pressed')).to.equal('true')
+    })
+  })
+
+  it('should update ARIA pressed when selection changes', async () => {
+    mockSupabase.order.resolves({ data: mockCategories, error: null })
+    const onChange = sinon.stub()
+
+    const { rerender } = render(<CategoryFilter selected="all" onChange={onChange} />)
+
+    await waitFor(() => {
+      expect(screen.getByText('All Topics')).to.exist
+    })
+
+    rerender(<CategoryFilter selected="programming" onChange={onChange} />)
+
+    await waitFor(() => {
+      const allButton = screen.getByText('All Topics').closest('button')
+      const programmingButton = screen.getByText('Programming').closest('button')
+
+      expect(allButton?.getAttribute('aria-pressed')).to.equal('false')
+      expect(programmingButton?.getAttribute('aria-pressed')).to.equal('true')
+    })
+  })
+
+  it('should have hover styles on unselected buttons', async () => {
+    mockSupabase.order.resolves({ data: mockCategories, error: null })
+    const onChange = sinon.stub()
+
+    render(<CategoryFilter selected="all" onChange={onChange} />)
+
+    await waitFor(() => {
+      const programmingButton = screen.getByText('Programming').closest('button')
+      expect(programmingButton?.className).to.include('hover:bg-gray-200')
+    })
+  })
+
+  it('should have flex wrap layout', async () => {
+    mockSupabase.order.resolves({ data: mockCategories, error: null })
+    const onChange = sinon.stub()
+
+    const { container } = render(<CategoryFilter selected="all" onChange={onChange} />)
+
+    await waitFor(() => {
+      const wrapper = container.querySelector('.flex.flex-wrap.gap-2')
+      expect(wrapper).to.exist
+    })
+  })
+
+  it('should not render duplicate categories', async () => {
+    mockSupabase.order.resolves({ data: mockCategories, error: null })
+    const onChange = sinon.stub()
+
+    const { container } = render(<CategoryFilter selected="all" onChange={onChange} />)
+
+    await waitFor(() => {
+      const buttons = Array.from(container.querySelectorAll('button'))
+      const programmingButtons = buttons.filter((btn) => btn.textContent === 'Programming')
+      expect(programmingButtons.length).to.equal(1) // Only one Programming button
+    })
+  })
+})
