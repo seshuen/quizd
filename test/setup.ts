@@ -32,6 +32,13 @@ Object.defineProperty(global, 'navigator', {
   configurable: true,
 });
 
+// Add self for Next.js Link component
+Object.defineProperty(global, 'self', {
+  value: dom.window,
+  writable: true,
+  configurable: true,
+});
+
 // Suppress React warnings in tests
 const originalError = console.error;
 console.error = (...args: unknown[]) => {

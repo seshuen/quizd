@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, use } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { Loading } from '@/components/ui/Loading'
@@ -11,12 +11,13 @@ import Link from 'next/link'
 type Topic = Database['public']['Tables']['topics']['Row']
 
 interface TopicDetailPageProps {
-  params: {
+  params: Promise<{
     topicId: string
-  }
+  }>
 }
 
 export default function TopicDetailPage({ params }: TopicDetailPageProps) {
+  const resolvedParams = use(params)
   const [topic, setTopic] = useState<Topic | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -31,7 +32,7 @@ export default function TopicDetailPage({ params }: TopicDetailPageProps) {
         const { data, error: fetchError } = await supabase
           .from('topics')
           .select('*')
-          .eq('slug', params.topicId)
+          .eq('slug', resolvedParams.topicId)
           .single()
 
         if (fetchError) {
@@ -49,11 +50,11 @@ export default function TopicDetailPage({ params }: TopicDetailPageProps) {
     }
 
     fetchTopic()
-  }, [params.topicId])
+  }, [resolvedParams.topicId])
 
   function handleStartPractice() {
     if (topic) {
-      router.push(`/practice/${topic.slug}`)
+      router.push(`/topics/${topic.slug}/practice`)
     }
   }
 
