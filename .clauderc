@@ -1,0 +1,127 @@
+# Claude AI Assistant Rules for QuizD Project
+
+## Test-Driven Development (TDD) Mandate
+
+**CRITICAL: All code changes MUST follow Test-Driven Development practices.**
+
+### TDD Workflow (MANDATORY)
+1. **Write test first** - Before writing any production code, write a failing test
+2. **Run test (RED)** - Verify the test fails for the right reason
+3. **Write minimal code (GREEN)** - Write just enough code to make the test pass
+4. **Run test again** - Verify the test now passes
+5. **Refactor (BLUE)** - Improve code quality while keeping tests green
+
+### Rules for Code Changes
+
+#### New Features
+- **NEVER** write production code before writing a test
+- **ALWAYS** start by writing a test that describes the desired behavior
+- **ALWAYS** run the test and confirm it fails (RED)
+- **ONLY THEN** implement the feature to make the test pass (GREEN)
+- **FINALLY** refactor if needed while keeping tests green (BLUE)
+
+#### Bug Fixes
+- **FIRST** write a test that reproduces the bug
+- **VERIFY** the test fails (confirms the bug exists)
+- **THEN** fix the bug
+- **VERIFY** the test now passes (confirms the fix works)
+
+#### Refactoring
+- **ENSURE** all existing tests pass before refactoring
+- **REFACTOR** the code
+- **VERIFY** all tests still pass after refactoring
+
+### Testing Requirements
+
+#### Test Coverage
+All code must have corresponding tests:
+- Functions and methods
+- React components
+- Forms and validation
+- Error handling
+- Edge cases and boundary conditions
+
+#### Database Interactions
+- **NEVER** make real database calls in tests
+- **ALWAYS** mock Supabase client and database operations
+- **USE** sinon stubs for mocking
+
+#### Test Structure
+```typescript
+describe('Feature/Component Name', () => {
+  // Setup
+  beforeEach(() => {
+    // Initialize mocks and test data
+  });
+
+  // Cleanup
+  afterEach(() => {
+    // Restore mocks
+    sinon.restore();
+  });
+
+  it('should describe expected behavior', () => {
+    // Arrange - setup test data
+    // Act - execute the code
+    // Assert - verify results
+  });
+});
+```
+
+### Commands
+
+```bash
+# Run all tests (MUST pass before committing)
+npm test
+
+# Run tests in watch mode during development
+npm run test:watch
+```
+
+### Before Implementing ANY Code
+
+When asked to implement a feature or fix a bug, Claude MUST:
+
+1. **Ask for clarification** if requirements are unclear
+2. **Write the test first** in the appropriate test file
+3. **Run the test** and show it failing (RED)
+4. **Implement the code** to make the test pass
+5. **Run the test again** and show it passing (GREEN)
+6. **Refactor if needed** while keeping tests green (BLUE)
+
+### Example Interaction
+
+**User**: "Add a function to calculate user XP based on correct answers"
+
+**Claude Response**:
+1. "I'll implement this using TDD. First, let me write a test..."
+2. [Writes test in test/lib/xp-calculator.test.ts]
+3. [Runs test, shows it fails - RED]
+4. "Now I'll implement the function..."
+5. [Implements lib/xp-calculator.ts]
+6. [Runs test, shows it passes - GREEN]
+7. "Tests pass! Would you like me to refactor for better code quality?"
+
+### File Locations
+
+- **Tests**: `test/**/*.test.ts` or `test/**/*.test.tsx`
+- **Source**: `lib/`, `components/`, `hooks/`, `app/`
+- **Test Docs**: `TEST_README.md`, `.claude/TDD_GUIDELINES.md`
+
+### Enforcement
+
+This is not a suggestion - it is **MANDATORY**. Claude will refuse to write production code without first writing a test.
+
+If asked to skip tests, Claude will:
+1. Explain why TDD is important
+2. Offer to write tests first
+3. Decline to write production code without tests
+
+### Resources
+
+- [TDD Guidelines](.claude/TDD_GUIDELINES.md) - Complete TDD guide
+- [Test Documentation](TEST_README.md) - Testing framework docs
+
+---
+
+**Remember: Tests are not optional. They are the specification of how the code should behave.**

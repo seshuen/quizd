@@ -6,7 +6,9 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "test": "set TS_NODE_PROJECT=tsconfig.node.json& mocha",
+    "test:watch": "set TS_NODE_PROJECT=tsconfig.node.json& mocha --watch"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",
@@ -21,17 +23,30 @@
     "zod": "^4.1.12"
   },
   "devDependencies": {
+    "@testing-library/jest-dom": "^6.9.1",
+    "@testing-library/react": "^16.3.0",
+    "@testing-library/user-event": "^14.6.1",
+    "@types/chai": "^5.2.3",
+    "@types/jsdom": "^27.0.0",
+    "@types/mocha": "^10.0.10",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "@types/sinon": "^17.0.4",
     "autoprefixer": "^10.4.20",
+    "chai": "^6.2.0",
     "eslint": "^8",
     "eslint-config-next": "^15.0.0",
+    "jsdom": "^27.0.1",
+    "mocha": "^11.7.4",
     "postcss": "^8.4.49",
     "prettier": "^3.6.2",
     "prettier-plugin-tailwindcss": "^0.7.1",
+    "sinon": "^21.0.0",
     "supabase": "^2.54.11",
     "tailwindcss": "^3.4.1",
+    "ts-node": "^10.9.2",
+    "tsconfig-paths": "^4.2.0",
     "tsx": "^4.20.6",
     "typescript": "^5"
   }

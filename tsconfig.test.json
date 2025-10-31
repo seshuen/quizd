@@ -1,0 +1,12 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "module": "commonjs",
+    "jsx": "react",
+    "types": ["mocha", "chai", "sinon", "node"],
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true
+  },
+  "include": ["test/**/*", "lib/**/*", "components/**/*", "hooks/**/*", "app/**/*"],
+  "exclude": ["node_modules", ".next"]
+}
