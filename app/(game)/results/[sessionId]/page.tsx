@@ -6,7 +6,7 @@ import { useAuth } from '@/hooks/useAuth'
 import { createClient } from '@/lib/supabase/client'
 import { getXPProgress } from '@/lib/utils/xp'
 import { Loading } from '@/components/ui/Loading'
-import { FaTrophy, FaClock, FaCheckCircle, FaStar, FaArrowRight } from 'react-icons/fa'
+import { FaTrophy, FaClock, FaCheckCircle, FaStar, FaArrowRight, FaTimesCircle } from 'react-icons/fa'
 
 interface GameAnswer {
   id: string
@@ -188,7 +188,7 @@ export default function ResultsPage() {
 
             <div className="text-center p-4 bg-gray-50 rounded-lg">
               <div className="flex items-center justify-center mb-2">
-                <FaCheckCircle className="text-2xl text-gray-400" />
+                <FaTimesCircle className="text-2xl text-red-600" />
               </div>
               <p className="text-2xl font-bold text-gray-900">
                 {session.questions_answered - session.correct_count}

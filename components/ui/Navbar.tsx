@@ -58,9 +58,12 @@ export function Navbar() {
           {/* Right side - User info and auth button */}
           <div className="flex items-center gap-4">
             {user && profile && (
-              <span className="hidden text-sm font-medium text-gray-700 sm:inline">
+              <Link
+                href="/profile"
+                className="hidden text-sm font-medium text-gray-700 transition-colors hover:text-indigo-600 sm:inline"
+              >
                 {profile.username}
-              </span>
+              </Link>
             )}
             {user ? (
               <button
