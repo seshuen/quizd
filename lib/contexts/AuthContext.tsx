@@ -1,6 +1,6 @@
 'use client'
 
-import { createContext, useContext, useEffect, useState } from 'react'
+import { createContext, useContext, useEffect, useState, useMemo, useCallback } from 'react'
 import { User, Session } from '@supabase/supabase-js'
 import { createClient } from '@/lib/supabase/client'
 import { Database } from '@/lib/supabase/types'
@@ -34,7 +34,27 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [profile, setProfile] = useState<Profile | null>(null)
   const [session, setSession] = useState<Session | null>(null)
   const [loading, setLoading] = useState(true)
-  const supabase = createClient()
+  const supabase = useMemo(() => createClient(), [])
+
+  /*
+  * This function fetches the profile of the user
+  * @param userId - The ID of the user
+  * @throws An error if the profile fetching fails
+  * */
+  const fetchProfile = useCallback(async (userId: string) => {
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('*')
+      .eq('id', userId)
+      .single()
+
+    if (error) {
+      console.error('Error fetching profile:', error)
+    } else {
+      setProfile(data)
+    }
+    setLoading(false)
+  }, [supabase])
 
   /*
   * This effect is used to get the initial session and listen for auth changes
@@ -67,27 +87,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     })
 
     return () => subscription.unsubscribe()
-  }, [])
-
-  /*
-  * This function fetches the profile of the user
-  * @param userId - The ID of the user
-  * @throws An error if the profile fetching fails
-  * */
-  async function fetchProfile(userId: string) {
-    const { data, error } = await supabase
-      .from('profiles')
-      .select('*')
-      .eq('id', userId)
-      .single()
-
-    if (error) {
-      console.error('Error fetching profile:', error)
-    } else {
-      setProfile(data)
-    }
-    setLoading(false)
-  }
+  }, [supabase, fetchProfile])
   
   /*
   * This function signs up the user

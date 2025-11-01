@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState, use } from 'react'
+import { useEffect, useState, use, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/hooks/useAuth'
 import { useGame } from '@/hooks/useGame'
@@ -94,6 +94,16 @@ export default function PracticePage({ params }: PracticePageProps) {
     router.push(`/results/${gameState.sessionId}`)
   }
 
+  // Prepare current question data (must be called before any returns to follow Rules of Hooks)
+  const currentQuestion = gameState.questions[gameState.currentQuestionIndex]
+  const allAnswers = useMemo(() => {
+    if (!currentQuestion) return []
+    return [
+      currentQuestion.correct_answer,
+      ...currentQuestion.incorrect_answers,
+    ].sort(() => Math.random() - 0.5)
+  }, [gameState.currentQuestionIndex, currentQuestion])
+
   if (loading || !gameState.questions.length) {
     return <Loading />
   }
@@ -102,12 +112,6 @@ export default function PracticePage({ params }: PracticePageProps) {
   if (gameState.currentQuestionIndex >= gameState.questions.length) {
     return <Loading />
   }
-
-  const currentQuestion = gameState.questions[gameState.currentQuestionIndex]
-  const allAnswers = [
-    currentQuestion.correct_answer,
-    ...currentQuestion.incorrect_answers,
-  ].sort(() => Math.random() - 0.5)
 
   return (
     <div className="mx-auto max-w-3xl px-4 py-8 sm:px-6 lg:px-8">

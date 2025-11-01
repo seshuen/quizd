@@ -1,38 +1,85 @@
 # QuizD Project Rules
 
-## MANDATORY: Test-Driven Development
+## Meta Rules
 
-**NEVER write production code without a test first.**
+- Do not use emojis in code, comments, or documentation
+- Keep all rules simple and concise
+- Prefer clear examples over long explanations
 
-### TDD Workflow
-1. Write failing test (RED)
-2. Write minimal code to pass (GREEN)
-3. Refactor while keeping tests green (BLUE)
+## React Hooks - MANDATORY
 
-### Requirements
+1. **Call all hooks BEFORE any conditional returns**
+   - Violating this breaks React's Rules of Hooks
+   - Move useMemo/useCallback/useEffect to top of component
 
-**Before ANY code change:**
-- Features: Write test → verify failure → implement → verify pass
-- Bugs: Write test reproducing bug → fix → verify pass
-- Refactoring: Ensure tests pass before and after
+2. **Memoize expensive computations with useMemo**
+   - Arrays/objects that shouldn't change on re-render
+   - Example: `useMemo(() => [...items].sort(), [dependency])`
 
-**Testing:**
+3. **Memoize client instances with useMemo**
+   - Database clients, API clients must be created once
+   - Example: `const supabase = useMemo(() => createClient(), [])`
+
+4. **Include ALL dependencies in dependency arrays**
+   - useEffect, useCallback, useMemo must list all dependencies
+   - Missing dependencies cause stale closures
+
+## Database Queries - MANDATORY
+
+**Avoid N+1 queries - use Supabase joins:**
+
+```typescript
+// CORRECT - Single query with join
+const { data } = await supabase
+  .from('game_sessions')
+  .select(`*, topics!inner(name, slug)`)
+  .eq('id', sessionId)
+
+// WRONG - Multiple queries (N+1 pattern)
+const session = await supabase.from('game_sessions').select('*')
+const topic = await supabase.from('topics').select('*').eq('id', session.topic_id)
+```
+
+## Test-Driven Development
+
+**TDD is REQUIRED for:**
+- New business logic functions
+- Bug fixes (write failing test first)
+- Complex utility functions
+- Form validation
+
+**TDD is OPTIONAL for:**
+- Performance fixes (hooks, memoization, query optimization)
+- UI styling changes
+- Implementing from detailed specs
+- Simple refactoring
+
+**When using /project:implement:**
+- Spec file acts as test specification
+- Implement what's in the spec
+- Write verification tests after if needed
+
+## Testing Requirements
+
 - Mock all Supabase/database calls (use sinon)
 - Tests in `test/**/*.test.ts(x)`
 - Run `npm test` before committing
-- Use `npm run test:watch` during development
 
-**Test structure:**
-```typescript
-describe('Component', () => {
-  beforeEach(() => { /* setup mocks */ });
-  afterEach(() => { sinon.restore(); });
-  it('should behavior', () => { /* Arrange, Act, Assert */ });
-});
+## Common Mistakes - DO NOT
+
+1. Call hooks after conditional returns
+2. Create new client instances on every render
+3. Have missing dependencies in useEffect/useCallback
+4. Make multiple sequential database queries when joins work
+5. Compute expensive values on every render without memoization
+
+## Commit Message Format
+
+```
+<type>: <short summary>
+
+- <change 1>
+- <change 2>
 ```
 
-### Enforcement
-
-Claude will **refuse** to write production code without tests first. No exceptions.
-
-See [.claude/TDD_GUIDELINES.md](.claude/TDD_GUIDELINES.md) for details.
+Types: feat, fix, refactor, perf, test, docs, chore

@@ -60,10 +60,13 @@ export default function ResultsPage() {
         const supabase = createClient()
         const sessionId = params.sessionId as string
 
-        // Fetch game session
+        // Fetch session with topic in one query using Supabase joins
         const { data: sessionData, error: sessionError } = await supabase
           .from('game_sessions')
-          .select('*')
+          .select(`
+            *,
+            topics!inner(name, slug)
+          `)
           .eq('id', sessionId)
           .eq('user_id', user.id)
           .single()
@@ -71,55 +74,31 @@ export default function ResultsPage() {
         if (sessionError) throw sessionError
         if (!sessionData) throw new Error('Session not found')
 
-        // Fetch topic details
-        const { data: topicData, error: topicError } = await supabase
-          .from('topics')
-          .select('name, slug')
-          .eq('id', sessionData.topic_id)
-          .single()
-
-        if (topicError) throw topicError
-
-        // Fetch game answers
+        // Fetch answers with questions in parallel using joins
         const { data: answersData, error: answersError } = await supabase
           .from('game_answers')
-          .select('*')
+          .select(`
+            *,
+            questions!inner(
+              question_text,
+              correct_answer,
+              incorrect_answers,
+              explanation
+            )
+          `)
           .eq('session_id', sessionId)
           .order('answered_at', { ascending: true })
 
         if (answersError) throw answersError
 
-        // Fetch question details for each answer
-        const questionIds = answersData.map(a => a.question_id).filter(Boolean) as string[]
-        const { data: questionsData, error: questionsError } = await supabase
-          .from('questions')
-          .select('id, question_text, correct_answer, incorrect_answers, explanation')
-          .in('id', questionIds)
+        // Session already has topic data from join
+        const combinedSession = sessionData as GameSession
 
-        if (questionsError) throw questionsError
+        // Answers already have question data from join
+        const combinedAnswers = answersData as GameAnswer[]
 
-        // Combine session with topic data
-        const combinedSession = {
-          ...sessionData,
-          topics: topicData
-        }
-
-        // Combine answers with question data
-        const combinedAnswers = answersData.map(answer => {
-          const question = questionsData.find(q => q.id === answer.question_id)
-          return {
-            ...answer,
-            questions: question || {
-              question_text: '',
-              correct_answer: '',
-              incorrect_answers: [],
-              explanation: null
-            }
-          }
-        })
-
-        setSession(combinedSession as any)
-        setAnswers(combinedAnswers as any)
+        setSession(combinedSession)
+        setAnswers(combinedAnswers)
       } catch (err) {
         console.error('Error fetching results:', err)
         setError('Failed to load results')
