@@ -137,15 +137,9 @@ export default function ResultsPage() {
 
   if (error || !session) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
+      <div className="flex items-center justify-center p-4">
         <div className="bg-white rounded-lg p-8 shadow-sm text-center">
           <p className="text-red-600 mb-4">{error || 'Session not found'}</p>
-          <button
-            onClick={() => router.push('/topics')}
-            className="text-indigo-600 hover:text-indigo-700"
-          >
-            Back to Topics
-          </button>
         </div>
       </div>
     )
@@ -164,7 +158,7 @@ export default function ResultsPage() {
   const xpProgress = profile?.total_xp ? getXPProgress(profile.total_xp) : null
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8 px-4">
+    <div className="py-8 px-4">
       <div className="max-w-4xl mx-auto space-y-6">
         {/* Header */}
         <div className="text-center">

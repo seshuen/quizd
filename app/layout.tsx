@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import { AuthProvider } from "@/lib/contexts/AuthContext";
+import { Navbar } from "@/components/ui/Navbar";
 
 export const metadata: Metadata = {
   title: "QuizD - Quiz App",
@@ -16,7 +17,10 @@ export default function RootLayout({
     <html lang="en">
       <body>
         <AuthProvider>
-          {children}
+          <Navbar />
+          <main className="min-h-screen bg-gray-50">
+            {children}
+          </main>
         </AuthProvider>
       </body>
     </html>

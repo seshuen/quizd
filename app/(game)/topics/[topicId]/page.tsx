@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { Loading } from '@/components/ui/Loading'
 import { Database } from '@/lib/supabase/types'
-import { FaQuestionCircle, FaPlay, FaArrowLeft } from 'react-icons/fa'
+import { FaQuestionCircle, FaPlay } from 'react-icons/fa'
 import Link from 'next/link'
 
 type Topic = Database['public']['Tables']['topics']['Row']
@@ -64,33 +64,17 @@ export default function TopicDetailPage({ params }: TopicDetailPageProps) {
 
   if (error || !topic) {
     return (
-      <div className="flex min-h-[400px] flex-col items-center justify-center">
+      <div className="flex min-h-[400px] flex-col items-center justify-center px-4">
         <div className="text-center">
           <h2 className="mb-2 text-2xl font-bold text-gray-900">Topic Not Found</h2>
-          <p className="mb-6 text-gray-600">{error || 'The topic you are looking for does not exist.'}</p>
-          <Link
-            href="/topics"
-            className="inline-flex items-center gap-2 rounded-lg bg-indigo-600 px-6 py-3 font-medium text-white transition-colors hover:bg-indigo-700"
-          >
-            <FaArrowLeft />
-            Back to Topics
-          </Link>
+          <p className="text-gray-600">{error || 'The topic you are looking for does not exist.'}</p>
         </div>
       </div>
     )
   }
 
   return (
-    <div className="mx-auto max-w-4xl">
-      {/* Back button */}
-      <Link
-        href="/topics"
-        className="mb-6 inline-flex items-center gap-2 text-gray-600 transition-colors hover:text-gray-900"
-      >
-        <FaArrowLeft />
-        Back to Topics
-      </Link>
-
+    <div className="mx-auto max-w-4xl px-4 py-8 sm:px-6 lg:px-8">
       {/* Topic Header */}
       <div className="mb-8 rounded-lg border border-gray-200 bg-white p-8 shadow-sm">
         <div className="mb-6 flex items-start justify-between">

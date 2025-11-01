@@ -59,21 +59,23 @@ export default function TopicsPage() {
   }
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="mb-2 text-3xl font-bold">Browse Topics</h1>
-        <p className="text-gray-600">Choose a topic to start practicing</p>
-      </div>
-
-      {error && (
-        <div className="rounded-lg bg-red-50 p-4 text-red-800">
-          <p className="font-medium">{error}</p>
+    <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+      <div className="space-y-6">
+        <div>
+          <h1 className="mb-2 text-3xl font-bold">Browse Topics</h1>
+          <p className="text-gray-600">Choose a topic to start practicing</p>
         </div>
-      )}
 
-      <CategoryFilter selected={selectedCategory} onChange={setSelectedCategory} />
+        {error && (
+          <div className="rounded-lg bg-red-50 p-4 text-red-800">
+            <p className="font-medium">{error}</p>
+          </div>
+        )}
 
-      <TopicGrid topics={filteredTopics} />
+        <CategoryFilter selected={selectedCategory} onChange={setSelectedCategory} />
+
+        <TopicGrid topics={filteredTopics} />
+      </div>
     </div>
   )
 }
