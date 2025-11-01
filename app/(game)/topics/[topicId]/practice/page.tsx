@@ -98,6 +98,11 @@ export default function PracticePage({ params }: PracticePageProps) {
     return <Loading />
   }
 
+  // Check if game is complete (after last question is answered)
+  if (gameState.currentQuestionIndex >= gameState.questions.length) {
+    return <Loading />
+  }
+
   const currentQuestion = gameState.questions[gameState.currentQuestionIndex]
   const allAnswers = [
     currentQuestion.correct_answer,
