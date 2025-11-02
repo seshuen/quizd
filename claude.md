@@ -65,6 +65,12 @@ const topic = await supabase.from('topics').select('*').eq('id', session.topic_i
 - Tests in `test/**/*.test.ts(x)`
 - Run `npm test` before committing
 
+## Dev Server Management
+
+**ALWAYS use `npm run dev:restart` when starting dev server during testing**
+
+DO NOT use `npm run dev` directly - it creates duplicate server instances.
+
 ## Common Mistakes - DO NOT
 
 1. Call hooks after conditional returns
@@ -72,6 +78,7 @@ const topic = await supabase.from('topics').select('*').eq('id', session.topic_i
 3. Have missing dependencies in useEffect/useCallback
 4. Make multiple sequential database queries when joins work
 5. Compute expensive values on every render without memoization
+6. Use `npm run dev` when testing (use `npm run dev:restart` instead)
 
 ## Commit Message Format
 

@@ -28,17 +28,12 @@ export default function TopicsPage() {
           .select('*')
           .order('name')
 
-        console.log('Topics fetch result:', { data, error: fetchError })
-
         if (fetchError) {
-          console.error('Error fetching topics:', fetchError)
           setError(`Failed to load topics: ${fetchError.message}`)
         } else {
-          console.log('Topics loaded successfully:', data?.length, 'topics')
           setTopics(data || [])
         }
       } catch (err) {
-        console.error('Unexpected error fetching topics:', err)
         setError('An unexpected error occurred. Please try again later.')
       } finally {
         setLoading(false)
