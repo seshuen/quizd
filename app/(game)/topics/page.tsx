@@ -15,9 +15,10 @@ export default function TopicsPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
+  const supabase = useMemo(() => createClient(), [])
+
   useEffect(() => {
     async function fetchTopics() {
-      const supabase = createClient()
       setLoading(true)
       setError(null)
 
@@ -45,7 +46,7 @@ export default function TopicsPage() {
     }
 
     fetchTopics()
-  }, [])
+  }, [supabase])
 
   const filteredTopics = useMemo(() => {
     if (selectedCategory === 'all') {

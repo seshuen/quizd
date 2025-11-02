@@ -2,13 +2,14 @@
 
 import { useAuth } from '@/lib/contexts/AuthContext'
 import { useRouter } from 'next/navigation'
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useMemo } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { FaUser, FaTrophy, FaGamepad, FaCheckCircle, FaBullseye, FaLock, FaStar } from 'react-icons/fa'
 
 export default function ProfilePage() {
   const { user, profile, loading } = useAuth()
   const router = useRouter()
+  const supabase = useMemo(() => createClient(), [])
   const [showPasswordModal, setShowPasswordModal] = useState(false)
   const [newPassword, setNewPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
@@ -47,7 +48,6 @@ export default function ProfilePage() {
     setUpdatingPassword(true)
 
     try {
-      const supabase = createClient()
       const { error } = await supabase.auth.updateUser({
         password: newPassword
       })

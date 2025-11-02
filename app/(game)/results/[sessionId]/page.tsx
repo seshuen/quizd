@@ -5,6 +5,7 @@ import { useParams, useRouter } from 'next/navigation'
 import { useAuth } from '@/hooks/useAuth'
 import { createClient } from '@/lib/supabase/client'
 import { getXPProgress } from '@/lib/utils/xp'
+import { isValidUUID } from '@/lib/utils/validation'
 import { Loading } from '@/components/ui/Loading'
 import { FaTrophy, FaClock, FaCheckCircle, FaStar, FaArrowRight, FaTimesCircle } from 'react-icons/fa'
 
@@ -59,6 +60,13 @@ export default function ResultsPage() {
       try {
         const supabase = createClient()
         const sessionId = params.sessionId as string
+
+        // Validate UUID before querying
+        if (!isValidUUID(sessionId)) {
+          setError('Invalid session ID')
+          setLoading(false)
+          return
+        }
 
         // Fetch session with topic in one query using Supabase joins
         const { data: sessionData, error: sessionError } = await supabase

@@ -3,6 +3,7 @@
 import { useState, useCallback, useMemo } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { calculateScore } from '@/lib/utils/scoring'
+import { isValidSlug, isValidUUID } from '@/lib/utils/validation'
 import { Database } from '@/lib/supabase/types'
 
 type Question = Database['public']['Tables']['questions']['Row']
@@ -45,6 +46,14 @@ export function useGame() {
   * @returns The ID of the game session
   * */
   const startGame = useCallback(async (topicSlug: string, userId: string) => {
+    // Validate inputs
+    if (!isValidSlug(topicSlug)) {
+      throw new Error('Invalid topic slug')
+    }
+    if (!isValidUUID(userId)) {
+      throw new Error('Invalid user ID')
+    }
+
     // First, fetch the topic by slug to get its ID
     const { data: topic, error: topicError } = await supabase
       .from('topics')
@@ -56,12 +65,12 @@ export function useGame() {
       throw new Error('Topic not found')
     }
 
-    // Fetch 7 random questions for this topic using the topic ID
+    // Fetch 25 random questions for better randomization
     const { data: questions, error: questionsError } = await supabase
       .from('questions')
       .select('*')
       .eq('topic_id', topic.id)
-      .limit(100)
+      .limit(25)
 
     if (questionsError || !questions) {
       throw new Error('Failed to load questions')

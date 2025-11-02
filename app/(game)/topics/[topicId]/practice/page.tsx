@@ -4,6 +4,7 @@ import { useEffect, useState, use, useMemo, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/hooks/useAuth'
 import { useGame } from '@/hooks/useGame'
+import { isValidSlug } from '@/lib/utils/validation'
 import { QuestionCard } from '@/components/game/QuestionCard'
 import { AnswerButton } from '@/components/game/AnswerButton'
 import { Timer } from '@/components/game/Timer'
@@ -35,7 +36,15 @@ export default function PracticePage({ params }: PracticePageProps) {
   * */
   const initGame = useCallback(async () => {
     try {
-      await startGame(resolvedParams.topicId, user!.id)
+      const topicSlug = resolvedParams.topicId
+
+      if (!isValidSlug(topicSlug)) {
+        console.error('Invalid topic ID')
+        setLoading(false)
+        return
+      }
+
+      await startGame(topicSlug, user!.id)
       setQuestionStartTime(Date.now())
     } catch (error) {
       console.error('Failed to start game:', error)

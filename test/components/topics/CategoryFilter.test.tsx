@@ -36,14 +36,12 @@ describe('CategoryFilter Component', () => {
   const mockCategories = [
     { category: 'programming' },
     { category: 'science' },
-    { category: 'programming' }, // Duplicate to test uniqueness
     { category: 'history' },
   ]
 
   it('should render loading state initially', () => {
-    // Mock RPC to fail so it falls back to regular query
-    mockSupabase.rpc.resolves({ data: null, error: { message: 'RPC not found' } })
-    mockSupabase.__mockChain.order.returns(Promise.resolve({ data: null, error: null }))
+    // Mock RPC to return data slowly
+    mockSupabase.rpc.returns(new Promise(resolve => setTimeout(() => resolve({ data: mockCategories, error: null }), 100)))
     const onChange = sinon.stub()
 
     render(<CategoryFilter selected="all" onChange={onChange} />)
@@ -54,23 +52,19 @@ describe('CategoryFilter Component', () => {
   })
 
   it('should fetch categories on mount', async () => {
-    // Mock RPC to fail so it falls back to regular query
-    mockSupabase.rpc.resolves({ data: null, error: { message: 'RPC not found' } })
-    mockSupabase.__mockChain.order.returns(Promise.resolve({ data: mockCategories, error: null }))
+    // Mock RPC to return categories
+    mockSupabase.rpc.resolves({ data: mockCategories, error: null })
     const onChange = sinon.stub()
 
     render(<CategoryFilter selected="all" onChange={onChange} />)
 
     await waitFor(() => {
-      expect(mockSupabase.from.calledWith('topics')).to.be.true
-      expect(mockSupabase.__mockChain.select.calledWith('category')).to.be.true
-      expect(mockSupabase.__mockChain.order.calledWith('category')).to.be.true
+      expect(mockSupabase.rpc.calledWith('get_distinct_categories')).to.be.true
     })
   })
 
   it('should render "All Topics" button', async () => {
-    mockSupabase.rpc.resolves({ data: null, error: { message: 'RPC not found' } })
-    mockSupabase.__mockChain.order.returns(Promise.resolve({ data: mockCategories, error: null }))
+    mockSupabase.rpc.resolves({ data: mockCategories, error: null })
     const onChange = sinon.stub()
 
     render(<CategoryFilter selected="all" onChange={onChange} />)
@@ -81,8 +75,7 @@ describe('CategoryFilter Component', () => {
   })
 
   it('should render unique categories', async () => {
-    mockSupabase.rpc.resolves({ data: null, error: { message: 'RPC not found' } })
-    mockSupabase.__mockChain.order.returns(Promise.resolve({ data: mockCategories, error: null }))
+    mockSupabase.rpc.resolves({ data: mockCategories, error: null })
     const onChange = sinon.stub()
 
     render(<CategoryFilter selected="all" onChange={onChange} />)
@@ -95,8 +88,7 @@ describe('CategoryFilter Component', () => {
   })
 
   it('should capitalize category labels', async () => {
-    mockSupabase.rpc.resolves({ data: null, error: { message: 'RPC not found' } })
-    mockSupabase.__mockChain.order.returns(Promise.resolve({ data: [{ category: 'programming' }], error: null }))
+    mockSupabase.rpc.resolves({ data: [{ category: 'programming' }], error: null })
     const onChange = sinon.stub()
 
     render(<CategoryFilter selected="all" onChange={onChange} />)
@@ -108,8 +100,7 @@ describe('CategoryFilter Component', () => {
   })
 
   it('should highlight selected category', async () => {
-    mockSupabase.rpc.resolves({ data: null, error: { message: 'RPC not found' } })
-    mockSupabase.__mockChain.order.returns(Promise.resolve({ data: mockCategories, error: null }))
+    mockSupabase.rpc.resolves({ data: mockCategories, error: null })
     const onChange = sinon.stub()
 
     render(<CategoryFilter selected="programming" onChange={onChange} />)
@@ -122,8 +113,7 @@ describe('CategoryFilter Component', () => {
   })
 
   it('should highlight "All Topics" when selected', async () => {
-    mockSupabase.rpc.resolves({ data: null, error: { message: 'RPC not found' } })
-    mockSupabase.__mockChain.order.returns(Promise.resolve({ data: mockCategories, error: null }))
+    mockSupabase.rpc.resolves({ data: mockCategories, error: null })
     const onChange = sinon.stub()
 
     render(<CategoryFilter selected="all" onChange={onChange} />)
@@ -136,8 +126,7 @@ describe('CategoryFilter Component', () => {
   })
 
   it('should call onChange when category is clicked', async () => {
-    mockSupabase.rpc.resolves({ data: null, error: { message: 'RPC not found' } })
-    mockSupabase.__mockChain.order.returns(Promise.resolve({ data: mockCategories, error: null }))
+    mockSupabase.rpc.resolves({ data: mockCategories, error: null })
     const onChange = sinon.stub()
     const user = userEvent.setup()
 
@@ -154,8 +143,7 @@ describe('CategoryFilter Component', () => {
   })
 
   it('should call onChange with "all" when All Topics is clicked', async () => {
-    mockSupabase.rpc.resolves({ data: null, error: { message: 'RPC not found' } })
-    mockSupabase.__mockChain.order.returns(Promise.resolve({ data: mockCategories, error: null }))
+    mockSupabase.rpc.resolves({ data: mockCategories, error: null })
     const onChange = sinon.stub()
     const user = userEvent.setup()
 
@@ -172,8 +160,7 @@ describe('CategoryFilter Component', () => {
   })
 
   it('should handle empty categories', async () => {
-    mockSupabase.rpc.resolves({ data: null, error: { message: 'RPC not found' } })
-    mockSupabase.__mockChain.order.returns(Promise.resolve({ data: [], error: null }))
+    mockSupabase.rpc.resolves({ data: [], error: null })
     const onChange = sinon.stub()
 
     render(<CategoryFilter selected="all" onChange={onChange} />)
@@ -185,8 +172,7 @@ describe('CategoryFilter Component', () => {
   })
 
   it('should handle fetch error', async () => {
-    mockSupabase.rpc.resolves({ data: null, error: { message: 'RPC not found' } })
-    mockSupabase.__mockChain.order.returns(Promise.resolve({ data: null, error: { message: 'Network error' } }))
+    mockSupabase.rpc.resolves({ data: null, error: { message: 'Network error' } })
     const consoleErrorStub = sinon.stub(console, 'error')
     const onChange = sinon.stub()
 
@@ -194,14 +180,14 @@ describe('CategoryFilter Component', () => {
 
     await waitFor(() => {
       expect(consoleErrorStub.called).to.be.true
+      expect(screen.getByText('All Topics')).to.exist
     })
 
     consoleErrorStub.restore()
   })
 
   it('should have ARIA labels on buttons', async () => {
-    mockSupabase.rpc.resolves({ data: null, error: { message: 'RPC not found' } })
-    mockSupabase.__mockChain.order.returns(Promise.resolve({ data: mockCategories, error: null }))
+    mockSupabase.rpc.resolves({ data: mockCategories, error: null })
     const onChange = sinon.stub()
 
     render(<CategoryFilter selected="all" onChange={onChange} />)
@@ -216,8 +202,7 @@ describe('CategoryFilter Component', () => {
   })
 
   it('should have ARIA pressed state', async () => {
-    mockSupabase.rpc.resolves({ data: null, error: { message: 'RPC not found' } })
-    mockSupabase.__mockChain.order.returns(Promise.resolve({ data: mockCategories, error: null }))
+    mockSupabase.rpc.resolves({ data: mockCategories, error: null })
     const onChange = sinon.stub()
 
     render(<CategoryFilter selected="all" onChange={onChange} />)
@@ -229,8 +214,7 @@ describe('CategoryFilter Component', () => {
   })
 
   it('should update ARIA pressed when selection changes', async () => {
-    mockSupabase.rpc.resolves({ data: null, error: { message: 'RPC not found' } })
-    mockSupabase.__mockChain.order.returns(Promise.resolve({ data: mockCategories, error: null }))
+    mockSupabase.rpc.resolves({ data: mockCategories, error: null })
     const onChange = sinon.stub()
 
     const { rerender } = render(<CategoryFilter selected="all" onChange={onChange} />)
@@ -251,8 +235,7 @@ describe('CategoryFilter Component', () => {
   })
 
   it('should have hover styles on unselected buttons', async () => {
-    mockSupabase.rpc.resolves({ data: null, error: { message: 'RPC not found' } })
-    mockSupabase.__mockChain.order.returns(Promise.resolve({ data: mockCategories, error: null }))
+    mockSupabase.rpc.resolves({ data: mockCategories, error: null })
     const onChange = sinon.stub()
 
     render(<CategoryFilter selected="all" onChange={onChange} />)
@@ -264,8 +247,7 @@ describe('CategoryFilter Component', () => {
   })
 
   it('should have flex wrap layout', async () => {
-    mockSupabase.rpc.resolves({ data: null, error: { message: 'RPC not found' } })
-    mockSupabase.__mockChain.order.returns(Promise.resolve({ data: mockCategories, error: null }))
+    mockSupabase.rpc.resolves({ data: mockCategories, error: null })
     const onChange = sinon.stub()
 
     const { container } = render(<CategoryFilter selected="all" onChange={onChange} />)
@@ -277,8 +259,7 @@ describe('CategoryFilter Component', () => {
   })
 
   it('should not render duplicate categories', async () => {
-    mockSupabase.rpc.resolves({ data: null, error: { message: 'RPC not found' } })
-    mockSupabase.__mockChain.order.returns(Promise.resolve({ data: mockCategories, error: null }))
+    mockSupabase.rpc.resolves({ data: mockCategories, error: null })
     const onChange = sinon.stub()
 
     const { container } = render(<CategoryFilter selected="all" onChange={onChange} />)

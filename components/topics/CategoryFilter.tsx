@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { createClient } from '@/lib/supabase/client'
 
 interface CategoryFilterProps {
@@ -12,42 +12,30 @@ export function CategoryFilter({ selected, onChange }: CategoryFilterProps) {
   const [categories, setCategories] = useState<string[]>([])
   const [loading, setLoading] = useState(true)
 
+  const supabase = useMemo(() => createClient(), [])
+
   useEffect(() => {
     async function fetchCategories() {
-      const supabase = createClient()
       setLoading(true)
 
-      // Try using the optimized RPC function first (if it exists)
-      // Falls back to the standard query if the function doesn't exist
-      // @ts-ignore - RPC function may not exist in types until migration is run
+      // Use RPC function as primary approach
+      // @ts-expect-error - RPC function may not exist in types until migration is run
       const { data: rpcData, error: rpcError } = await supabase.rpc('get_distinct_categories')
 
-      if (!rpcError && rpcData && Array.isArray(rpcData)) {
-        // Use optimized function result
-        // @ts-ignore - RPC result type not in generated types
-        const categories = rpcData.map((item: any) => item.category as string)
-        setCategories(categories)
+      if (rpcError) {
+        console.error('Error fetching categories:', rpcError)
+        setCategories([])
       } else {
-        // Fallback to selecting all topics (backwards compatible)
-        const { data, error } = await supabase
-          .from('topics')
-          .select('category')
-          .order('category')
-
-        if (error) {
-          console.error('Error fetching categories:', error)
-        } else {
-          // Get unique categories
-          const uniqueCategories = [...new Set(data?.map((item) => item.category) || [])]
-          setCategories(uniqueCategories)
-        }
+        // @ts-expect-error - RPC result type not in generated types
+        const categories = (rpcData || []).map((item: { category: string }) => item.category)
+        setCategories(categories)
       }
 
       setLoading(false)
     }
 
     fetchCategories()
-  }, [])
+  }, [supabase])
 
   // Capitalize first letter for display
   const formatCategoryLabel = (category: string) => {
