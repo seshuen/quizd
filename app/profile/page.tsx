@@ -238,9 +238,17 @@ export default function ProfilePage() {
 
       {/* Quiz History */}
       <div className="mt-6">
-        <div className="mb-4 flex items-center gap-3">
-          <FaHistory className="h-6 w-6 text-gray-700" />
-          <h2 className="text-xl font-bold text-gray-900">Recent Quiz History</h2>
+        <div className="mb-4 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <FaHistory className="h-6 w-6 text-gray-700" />
+            <h2 className="text-xl font-bold text-gray-900">Recent Quiz History</h2>
+          </div>
+          <a
+            href="/history"
+            className="text-indigo-600 hover:text-indigo-700 font-medium text-sm"
+          >
+            View All
+          </a>
         </div>
         {loadingHistory ? (
           <div className="rounded-lg bg-white p-8 text-center shadow-md">

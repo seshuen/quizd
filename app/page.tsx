@@ -142,7 +142,7 @@ export default function Home() {
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-2xl font-bold text-gray-900">Recent Quiz</h2>
             <Link
-              href="/profile"
+              href="/history"
               className="text-indigo-600 hover:text-indigo-700 font-medium text-sm flex items-center"
             >
               View All
