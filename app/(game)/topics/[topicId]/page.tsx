@@ -6,7 +6,6 @@ import { createClient } from '@/lib/supabase/client'
 import { Loading } from '@/components/ui/Loading'
 import { Database } from '@/lib/supabase/types'
 import { FaQuestionCircle, FaPlay } from 'react-icons/fa'
-import Link from 'next/link'
 
 type Topic = Database['public']['Tables']['topics']['Row']
 
@@ -126,7 +125,7 @@ export default function TopicDetailPage({ params }: TopicDetailPageProps) {
 
       {/* Additional Info */}
       <div className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
-        <h2 className="mb-4 text-xl font-semibold text-gray-900">What You'll Practice</h2>
+        <h2 className="mb-4 text-xl font-semibold text-gray-900">What You&apos;ll Practice</h2>
         <ul className="space-y-2 text-gray-700">
           <li className="flex items-start gap-2">
             <span className="mt-1 text-indigo-600">•</span>

@@ -56,8 +56,8 @@ export function RegisterForm() {
       await signUp(data.email, data.password, data.username)
       // Redirect to login with success message
       router.push('/login?registered=true')
-    } catch (err: any) {
-      setError(err.message || 'Failed to create account')
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to create account')
     } finally {
       setLoading(false)
     }

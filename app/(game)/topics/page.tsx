@@ -33,7 +33,7 @@ export default function TopicsPage() {
         } else {
           setTopics(data || [])
         }
-      } catch (err) {
+      } catch {
         setError('An unexpected error occurred. Please try again later.')
       } finally {
         setLoading(false)
