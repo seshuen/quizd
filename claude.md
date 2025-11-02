@@ -2,9 +2,9 @@
 
 ## Meta Rules
 
-- Do not use emojis in code, comments, or documentation
-- Keep all rules simple and concise
-- Prefer clear examples over long explanations
+- No emojis in code, comments, or documentation
+- Keep rules simple and concise
+- Prefer clear examples over explanations
 
 ## React Hooks - MANDATORY
 
