@@ -4,7 +4,22 @@ import { useAuth } from '@/lib/contexts/AuthContext'
 import { useRouter } from 'next/navigation'
 import { useEffect, useState, useMemo } from 'react'
 import { createClient } from '@/lib/supabase/client'
-import { FaUser, FaTrophy, FaGamepad, FaCheckCircle, FaBullseye, FaLock, FaStar } from 'react-icons/fa'
+import { FaUser, FaTrophy, FaGamepad, FaCheckCircle, FaBullseye, FaLock, FaStar, FaHistory } from 'react-icons/fa'
+import { QuizHistoryList } from '@/components/profile/QuizHistoryList'
+
+interface QuizHistoryItem {
+  id: string
+  score: number | null
+  correct_count: number | null
+  questions_answered: number | null
+  xp_earned: number | null
+  total_time_seconds: number | null
+  completed_at: string | null
+  topics: {
+    name: string
+    slug: string
+  }
+}
 
 export default function ProfilePage() {
   const { user, profile, loading } = useAuth()
@@ -16,12 +31,53 @@ export default function ProfilePage() {
   const [passwordError, setPasswordError] = useState('')
   const [passwordSuccess, setPasswordSuccess] = useState('')
   const [updatingPassword, setUpdatingPassword] = useState(false)
+  const [quizHistory, setQuizHistory] = useState<QuizHistoryItem[]>([])
+  const [loadingHistory, setLoadingHistory] = useState(true)
 
   useEffect(() => {
     if (!loading && !user) {
       router.push('/login')
     }
   }, [user, loading, router])
+
+  useEffect(() => {
+    const fetchQuizHistory = async () => {
+      if (!user) return
+
+      setLoadingHistory(true)
+      try {
+        const { data, error } = await supabase
+          .from('game_sessions')
+          .select(`
+            id,
+            score,
+            correct_count,
+            questions_answered,
+            xp_earned,
+            total_time_seconds,
+            completed_at,
+            topics!inner(name, slug)
+          `)
+          .eq('user_id', user.id)
+          .eq('completed', true)
+          .order('completed_at', { ascending: false })
+          .limit(5)
+
+        if (error) {
+          console.error('Error fetching quiz history:', error)
+          return
+        }
+
+        setQuizHistory(data || [])
+      } catch (error) {
+        console.error('Error fetching quiz history:', error)
+      } finally {
+        setLoadingHistory(false)
+      }
+    }
+
+    fetchQuizHistory()
+  }, [user, supabase])
 
   const calculateAccuracy = () => {
     if (!profile || !profile.questions_answered || profile.questions_answered === 0) {
@@ -178,6 +234,21 @@ export default function ProfilePage() {
             </span>
           </div>
         </div>
+      </div>
+
+      {/* Quiz History */}
+      <div className="mt-6">
+        <div className="mb-4 flex items-center gap-3">
+          <FaHistory className="h-6 w-6 text-gray-700" />
+          <h2 className="text-xl font-bold text-gray-900">Recent Quiz History</h2>
+        </div>
+        {loadingHistory ? (
+          <div className="rounded-lg bg-white p-8 text-center shadow-md">
+            <div className="text-gray-600">Loading quiz history...</div>
+          </div>
+        ) : (
+          <QuizHistoryList quizzes={quizHistory} />
+        )}
       </div>
 
       {/* Password Update Modal */}
