@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 
 interface TimerProps {
   duration: number // seconds
@@ -10,6 +10,14 @@ interface TimerProps {
 
 export function Timer({ duration, onTimeout, paused = false }: TimerProps) {
   const [timeLeft, setTimeLeft] = useState(duration)
+  const onTimeoutRef = useRef(onTimeout)
+
+  /*
+  * This effect keeps the ref updated with the latest onTimeout
+  * */
+  useEffect(() => {
+    onTimeoutRef.current = onTimeout
+  }, [onTimeout])
 
   /*
   * This effect resets the timer when duration changes (new question)
@@ -29,7 +37,7 @@ export function Timer({ duration, onTimeout, paused = false }: TimerProps) {
       setTimeLeft((prev) => {
         if (prev <= 0) {
           clearInterval(interval)
-          onTimeout()
+          onTimeoutRef.current()
           return 0
         }
         return prev - 1
@@ -37,7 +45,7 @@ export function Timer({ duration, onTimeout, paused = false }: TimerProps) {
     }, 1000)
 
     return () => clearInterval(interval)
-  }, [paused, onTimeout])
+  }, [paused])
 
   /*
   * This function is used to calculate the percentage of the time left

@@ -1,8 +1,7 @@
 'use client'
 
 import { useAuth } from "@/lib/contexts/AuthContext";
-import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { RecentQuizCard } from "@/components/home/RecentQuizCard";
 import { FeaturedTopics } from "@/components/home/FeaturedTopics";
@@ -27,10 +26,11 @@ interface RecentQuiz {
 
 export default function Home() {
   const { user, profile, loading: authLoading } = useAuth();
-  const router = useRouter();
   const [recentQuiz, setRecentQuiz] = useState<RecentQuiz | null>(null);
   const [featuredTopics, setFeaturedTopics] = useState<Topic[]>([]);
   const [loading, setLoading] = useState(true);
+
+  const supabase = useMemo(() => createClient(), []);
 
   useEffect(() => {
     const fetchHomeData = async () => {
@@ -40,12 +40,19 @@ export default function Home() {
       }
 
       try {
-        const supabase = createClient();
-
-        // Fetch most recent completed quiz session
+        // Fetch most recent completed quiz session with topic in one query
         const { data: sessionData, error: sessionError } = await supabase
           .from('game_sessions')
-          .select('id, topic_id, score, correct_count, questions_answered, xp_earned, completed_at, total_time_seconds')
+          .select(`
+            id,
+            score,
+            correct_count,
+            questions_answered,
+            xp_earned,
+            completed_at,
+            total_time_seconds,
+            topics!inner(name, slug)
+          `)
           .eq('user_id', user.id)
           .eq('completed', true)
           .order('completed_at', { ascending: false })
@@ -53,26 +60,17 @@ export default function Home() {
           .single();
 
         if (sessionData && !sessionError) {
-          // Fetch topic details for the recent quiz
-          const { data: topicData } = await supabase
-            .from('topics')
-            .select('name, slug')
-            .eq('id', sessionData.topic_id)
-            .single();
-
-          if (topicData) {
-            setRecentQuiz({
-              id: sessionData.id,
-              topic_name: topicData.name,
-              topic_slug: topicData.slug,
-              score: sessionData.score || 0,
-              correct_count: sessionData.correct_count || 0,
-              questions_answered: sessionData.questions_answered || 0,
-              xp_earned: sessionData.xp_earned || 0,
-              completed_at: sessionData.completed_at || '',
-              total_time_seconds: sessionData.total_time_seconds || 0,
-            });
-          }
+          setRecentQuiz({
+            id: sessionData.id,
+            topic_name: sessionData.topics.name,
+            topic_slug: sessionData.topics.slug,
+            score: sessionData.score || 0,
+            correct_count: sessionData.correct_count || 0,
+            questions_answered: sessionData.questions_answered || 0,
+            xp_earned: sessionData.xp_earned || 0,
+            completed_at: sessionData.completed_at || '',
+            total_time_seconds: sessionData.total_time_seconds || 0,
+          });
         }
 
         // Fetch featured topics (top 6 by play count)
@@ -95,7 +93,7 @@ export default function Home() {
     if (!authLoading) {
       fetchHomeData();
     }
-  }, [user, authLoading]);
+  }, [user, authLoading, supabase]);
 
   if (authLoading || loading) {
     return <Loading />;

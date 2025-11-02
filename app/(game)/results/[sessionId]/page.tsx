@@ -75,11 +75,18 @@ export default function ResultsPage() {
         if (!sessionData) throw new Error('Session not found')
 
         // Fetch answers with questions in parallel using joins
+        // Note: Using 'questions' (not 'questions!inner') for proper one-to-one relationship
         const { data: answersData, error: answersError } = await supabase
           .from('game_answers')
           .select(`
-            *,
-            questions!inner(
+            id,
+            question_id,
+            user_answer,
+            is_correct,
+            time_taken_ms,
+            points_earned,
+            answered_at,
+            questions(
               question_text,
               correct_answer,
               incorrect_answers,

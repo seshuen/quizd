@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useMemo } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { calculateScore } from '@/lib/utils/scoring'
 import { Database } from '@/lib/supabase/types'
@@ -36,7 +36,7 @@ export function useGame() {
     startTime: 0,
   })
 
-  const supabase = createClient()
+  const supabase = useMemo(() => createClient(), [])
 
   /*
   * This function is used to start a new game
@@ -95,7 +95,7 @@ export function useGame() {
     })
 
     return session.id
-  }, [])
+  }, [supabase])
 
   /*
   * This function is used to submit an answer to a question
@@ -105,41 +105,48 @@ export function useGame() {
   * */
   const submitAnswer = useCallback(
     async (answer: string, timeTaken: number) => {
-      const currentQuestion = gameState.questions[gameState.currentQuestionIndex]
-      const isCorrect = answer === currentQuestion.correct_answer
-      const pointsEarned = calculateScore(isCorrect, timeTaken)
+      // Use functional setState to avoid dependency on gameState
+      let result = { isCorrect: false, pointsEarned: 0 }
 
-      // Save answer to database
-      await supabase.from('game_answers').insert({
-        session_id: gameState.sessionId,
-        question_id: currentQuestion.id,
-        user_answer: answer,
-        is_correct: isCorrect,
-        time_taken_ms: timeTaken,
-        points_earned: pointsEarned,
+      setGameState((prev) => {
+        const currentQuestion = prev.questions[prev.currentQuestionIndex]
+        const isCorrect = answer === currentQuestion.correct_answer
+        const pointsEarned = calculateScore(isCorrect, timeTaken)
+
+        // Save answer to database (async, outside setState)
+        supabase.from('game_answers').insert({
+          session_id: prev.sessionId,
+          question_id: currentQuestion.id,
+          user_answer: answer,
+          is_correct: isCorrect,
+          time_taken_ms: timeTaken,
+          points_earned: pointsEarned,
+        }).then()
+
+        const newAnswers = [
+          ...prev.answers,
+          {
+            questionId: currentQuestion.id,
+            userAnswer: answer,
+            isCorrect,
+            timeTaken,
+            pointsEarned,
+          },
+        ]
+
+        result = { isCorrect, pointsEarned }
+
+        return {
+          ...prev,
+          answers: newAnswers,
+          score: prev.score + pointsEarned,
+          currentQuestionIndex: prev.currentQuestionIndex + 1,
+        }
       })
 
-      const newAnswers = [
-        ...gameState.answers,
-        {
-          questionId: currentQuestion.id,
-          userAnswer: answer,
-          isCorrect,
-          timeTaken,
-          pointsEarned,
-        },
-      ]
-
-      setGameState((prev) => ({
-        ...prev,
-        answers: newAnswers,
-        score: prev.score + pointsEarned,
-        currentQuestionIndex: prev.currentQuestionIndex + 1,
-      }))
-
-      return { isCorrect, pointsEarned }
+      return result
     },
-    [gameState]
+    [supabase]
   )
 
   /*
@@ -180,7 +187,7 @@ export function useGame() {
     }
 
     return { correctCount, totalTime, xpEarned }
-  }, [gameState])
+  }, [gameState, supabase])
 
   return {
     gameState,

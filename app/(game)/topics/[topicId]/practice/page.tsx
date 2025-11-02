@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState, use, useMemo } from 'react'
+import { useEffect, useState, use, useMemo, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/hooks/useAuth'
 import { useGame } from '@/hooks/useGame'
@@ -29,17 +29,11 @@ export default function PracticePage({ params }: PracticePageProps) {
   const [showResult, setShowResult] = useState(false)
   const [questionStartTime, setQuestionStartTime] = useState(Date.now())
 
-  useEffect(() => {
-    if (user) {
-      initGame()
-    }
-  }, [user])
-
   /*
   * This function is used to initialize the game
   * @throws An error if the game initialization fails
   * */
-  async function initGame() {
+  const initGame = useCallback(async () => {
     try {
       await startGame(resolvedParams.topicId, user!.id)
       setQuestionStartTime(Date.now())
@@ -48,20 +42,35 @@ export default function PracticePage({ params }: PracticePageProps) {
     } finally {
       setLoading(false)
     }
-  }
+  }, [startGame, resolvedParams.topicId, user])
+
+  useEffect(() => {
+    if (user) {
+      initGame()
+    }
+  }, [user, initGame])
+
+  /*
+  * This function is used to complete the game
+  * @throws An error if the game completion fails
+  * */
+  const completeGame = useCallback(async () => {
+    await finishGame()
+    router.push(`/results/${gameState.sessionId}`)
+  }, [finishGame, router, gameState.sessionId])
 
   /*
   * This function is used to handle the selection of an answer
   * @param answer - The answer to the question
   * @throws An error if the answer selection fails
   * */
-  async function handleAnswerSelect(answer: string) {
+  const handleAnswerSelect = useCallback(async (answer: string) => {
     if (showResult) return
 
     setSelectedAnswer(answer)
     const timeTaken = Date.now() - questionStartTime
 
-    const { isCorrect } = await submitAnswer(answer, timeTaken)
+    await submitAnswer(answer, timeTaken)
     setShowResult(true)
 
     // Move to next question after 2 seconds
@@ -75,24 +84,15 @@ export default function PracticePage({ params }: PracticePageProps) {
         setQuestionStartTime(Date.now())
       }
     }, 2000)
-  }
+  }, [showResult, questionStartTime, submitAnswer, gameState.currentQuestionIndex, completeGame])
 
   /*
   * This function is used to handle the timeout of a question
   * @throws An error if the timeout fails
   * */
-  async function handleTimeout() {
+  const handleTimeout = useCallback(async () => {
     await handleAnswerSelect('') // Empty answer for timeout
-  }
-
-  /*
-  * This function is used to complete the game
-  * @throws An error if the game completion fails
-  * */
-  async function completeGame() {
-    const results = await finishGame()
-    router.push(`/results/${gameState.sessionId}`)
-  }
+  }, [handleAnswerSelect])
 
   // Prepare current question data (must be called before any returns to follow Rules of Hooks)
   const currentQuestion = gameState.questions[gameState.currentQuestionIndex]
@@ -102,7 +102,7 @@ export default function PracticePage({ params }: PracticePageProps) {
       currentQuestion.correct_answer,
       ...currentQuestion.incorrect_answers,
     ].sort(() => Math.random() - 0.5)
-  }, [gameState.currentQuestionIndex, currentQuestion])
+  }, [currentQuestion])
 
   if (loading || !gameState.questions.length) {
     return <Loading />
