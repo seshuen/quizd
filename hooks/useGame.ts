@@ -105,46 +105,61 @@ export function useGame() {
   * */
   const submitAnswer = useCallback(
     async (answer: string, timeTaken: number) => {
-      // Use functional setState to avoid dependency on gameState
-      let result = { isCorrect: false, pointsEarned: 0 }
+      // Capture the answer data BEFORE calling setState
+      const answerData = await new Promise<{
+        isCorrect: boolean
+        pointsEarned: number
+        sessionId: string | null
+        questionId: string
+      }>((resolve) => {
+        setGameState((prev) => {
+          const currentQuestion = prev.questions[prev.currentQuestionIndex]
+          const isCorrect = answer === currentQuestion.correct_answer
+          const pointsEarned = calculateScore(isCorrect, timeTaken)
 
-      setGameState((prev) => {
-        const currentQuestion = prev.questions[prev.currentQuestionIndex]
-        const isCorrect = answer === currentQuestion.correct_answer
-        const pointsEarned = calculateScore(isCorrect, timeTaken)
-
-        // Save answer to database (async, outside setState)
-        supabase.from('game_answers').insert({
-          session_id: prev.sessionId,
-          question_id: currentQuestion.id,
-          user_answer: answer,
-          is_correct: isCorrect,
-          time_taken_ms: timeTaken,
-          points_earned: pointsEarned,
-        }).then()
-
-        const newAnswers = [
-          ...prev.answers,
-          {
-            questionId: currentQuestion.id,
-            userAnswer: answer,
+          // Resolve with the data we need for DB insert
+          resolve({
             isCorrect,
-            timeTaken,
             pointsEarned,
-          },
-        ]
+            sessionId: prev.sessionId,
+            questionId: currentQuestion.id,
+          })
 
-        result = { isCorrect, pointsEarned }
+          const newAnswers = [
+            ...prev.answers,
+            {
+              questionId: currentQuestion.id,
+              userAnswer: answer,
+              isCorrect,
+              timeTaken,
+              pointsEarned,
+            },
+          ]
 
-        return {
-          ...prev,
-          answers: newAnswers,
-          score: prev.score + pointsEarned,
-          currentQuestionIndex: prev.currentQuestionIndex + 1,
-        }
+          return {
+            ...prev,
+            answers: newAnswers,
+            score: prev.score + pointsEarned,
+            currentQuestionIndex: prev.currentQuestionIndex + 1,
+          }
+        })
       })
 
-      return result
+      // Save answer to database AFTER setState completes
+      // This ensures insert only happens once, not on every setState re-run
+      await supabase.from('game_answers').insert({
+        session_id: answerData.sessionId,
+        question_id: answerData.questionId,
+        user_answer: answer,
+        is_correct: answerData.isCorrect,
+        time_taken_ms: timeTaken,
+        points_earned: answerData.pointsEarned,
+      })
+
+      return {
+        isCorrect: answerData.isCorrect,
+        pointsEarned: answerData.pointsEarned,
+      }
     },
     [supabase]
   )
